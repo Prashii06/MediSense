@@ -1,0 +1,33 @@
+Sunrise Diagnostic Centre
+Comprehensive Medical Report
+Report Generated: 22 Nov 2025 18:10
+Patient Name: Rahul Kumar
+Patient ID: SR-2025-01894
+Date of Birth: 15 Aug 1988 (37 years)
+Sex: Male
+Referring Physician: Dr. Meera Joshi, MD
+Sample Collected: 18 Nov 2025 09:30
+Report Date: 22 Nov 2025
+Vital Signs
+Blood Pressure (BP) 148/92 mmHg (elevated)
+Heart Rate 86 bpm (regular)
+Respiratory Rate 16 /min
+Temperature 98.6 °F (37.0 °C)
+SpO2 97%
+Selected Laboratory Results
+Test Result Reference Range
+Hemoglobin (Hb) 10.8 g/dL 13.5 - 17.5 g/dL (male)
+Hematocrit (Hct) 33 % 40 - 52 % (male)
+WBC 12,600 /μL 4,000 - 11,000 /μL
+Platelets 220,000 /μL 150,000 - 450,000 /μL
+Fasting Glucose 142 mg/dL 70 - 100 mg/dL (fasting)
+HbA1c 7.8 % < 5.7 % (normal)
+Total Cholesterol 258 mg/dL < 200 mg/dL
+LDL Cholesterol 165 mg/dL < 100 mg/dL (optimal)
+HDL Cholesterol 38 mg/dL > 40 mg/dL (desirable)
+Triglycerides 210 mg/dL < 150 mg/dL
+Creatinine 1.6 mg/dL 0.6 - 1.2 mg/dL
+BUN 24 mg/dL 7 - 20 mg/dL
+ALT 45 U/L 7 - 56 U/L
+AST 48 U/L 10 - 40 U/L
+TSH 2.1 mIU/L 0.4 - 4.0 mIU/L

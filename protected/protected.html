@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MediSense</title>
+    <link rel="stylesheet" href="stylesheets/protected.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://code.jquery.com/jquery-3.1.1.js"></script>
+    <link rel="stylesheet" href="stylesheets/jquery.json-viewer.css">
+    <link rel="shortcut icon" href="images/MS-removebg-preview.png" type="image/svg">
+</head>
+
+<body>
+
+<!-- Header -->
+<header class="header">
+    <div class="logo-area">
+        <img src="images/MS-removebg-preview.png" class="logo-icon" alt="logo">
+        <span class="brand-name">MediSense</span>
+    </div>
+
+    <div class="user-area">
+        <span id="userNameSpanNav" class="user-greet"></span>
+        <a href="/logout" aria-label="logout">
+            <button class="logout-btn">Logout</button>
+        </a>
+    </div>
+</header>
+
+
+<!-- Main Dashboard Container -->
+<div class="dashboard">
+
+    <!-- Welcome Section -->
+    <section class="welcome-card glass-card">
+        <h2>Welcome, <span id="userNameSpan"></span> 👋</h2>
+        <p>Upload a report and let our AI simplify it for you in an easy language.</p>
+    </section>
+
+    <!-- Upload Section -->
+    <section class="upload-card glass-card">
+        <h3>Upload Patient Report</h3>
+        <p class="small-text">Supported formats: PDF, JPG, PNG, TXT</p>
+
+        <div class="upload-area" id="uploadArea">
+            <input type="file" id="fileUpload" class="file-input" accept=".pdf, .png, .jpg, .jpeg, .txt">
+            <label for="fileUpload" class="file-label">
+                <span class="upload-icon">📄</span>
+                <span id="fileName">Click to select a file or drag and drop</span>
+            </label>
+        </div>
+
+        <div class="file-info" id="fileInfo" style="display:none;">
+            <p><strong>Selected:</strong> <span id="selectedFileName"></span></p>
+            <p><strong>Size:</strong> <span id="fileSize"></span></p>
+        </div>
+
+        <button class="analyze-btn" id="analyzeBtn" disabled>Analyze Report</button>
+        <div class="loading-spinner" id="loadingSpinner" style="display:none;">
+            <div class="spinner"></div>
+            <p>Analyzing report...</p>
+        </div>
+
+        <!-- AI Output -->
+        <div class="ai-output" id="aiOutput" style="display:none;">
+            <div class="output-header">
+                <h4>📊 Analysis Report</h4>
+                <button class="download-btn" id="downloadBtn">Download Report</button>
+            </div>
+            <div class="report-sections">
+                <div class="report-section">
+                    <h5>📋 Summary</h5>
+                    <div id="summaryText" class="report-content"></div>
+                </div>
+                <div class="report-section" id="diagnosisSection" style="display:none;">
+                    <h5>🩺 Diagnosis / Problem Identified</h5>
+                    <div id="diagnosisText" class="report-content"></div>
+                </div>
+                <div class="report-section" id="medicationsSection" style="display:none;">
+                    <h5>💊 Medications Prescribed</h5>
+                    <div id="medicationsText" class="report-content"></div>
+                </div>
+                <div class="report-section" id="medicationInstructionsSection" style="display:none;">
+                    <h5>📖 How to Take Your Medications</h5>
+                    <div id="medicationInstructionsText" class="report-content"></div>
+                </div>
+                <div class="report-section" id="alternativeMedicationsSection" style="display:none;">
+                    <h5>💡 Alternative Medications (Consult Your Doctor)</h5>
+                    <div id="alternativeMedicationsText" class="report-content"></div>
+                </div>
+                <div class="report-section">
+                    <h5>🔍 Key Findings</h5>
+                    <div id="findingsText" class="report-content"></div>
+                </div>
+                <div class="report-section">
+                    <h5>💡 Recommendations</h5>
+                    <div id="recommendationsText" class="report-content"></div>
+                </div>
+                <div class="report-section">
+                    <h5>📝 Medical Terms Explained</h5>
+                    <div id="termsText" class="report-content"></div>
+                </div>
+                <div class="report-section" id="labExplanationsSection" style="display:none;">
+                    <h5>🔬 Lab Results Explained</h5>
+                    <div id="labExplanations" class="report-content"></div>
+                </div>
+                <div class="report-section" id="labActionItemsSection" style="display:none;">
+                    <h5>⚠️ Action Items</h5>
+                    <div id="labActionItems" class="report-content"></div>
+                </div>
+                <div class="report-section" id="labQuestionsSection" style="display:none;">
+                    <h5>❓ Suggested Questions for Your Doctor</h5>
+                    <div id="labQuestions" class="report-content"></div>
+                </div>
+                <div class="report-section" id="extractionSection" style="display:none; background: rgba(255,230,230,0.03); padding:10px; border-radius:6px;">
+                    <h5>⚙️ Extraction Info</h5>
+                    <div id="extractionText" class="report-content"></div>
+                    <div id="originalTextBlock" style="display:none; margin-top:10px;">
+                        <h6>Full Extracted Text / OCR Output</h6>
+                        <pre id="originalTextPre" style="max-height:300px; overflow:auto; background:#0f1720; padding:10px; border-radius:6px; color:#e6eef8;"></pre>
+                    </div>
+                    <button id="toggleOriginalText" style="display:none; margin-top:8px;">Show full extracted text</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Report History Section -->
+    <section class="history-card glass-card">
+        <h3>📚 Report History</h3>
+        <div id="reportHistory" class="history-list">
+            <p class="empty-state">No reports analyzed yet. Upload your first report to get started!</p>
+        </div>
+    </section>
+
+    <script>
+        // Get user info
+        $.get("/protected/api/idPayload")
+            .done(function(data) {
+                const userName = data.name || data.email || "User";
+                $("#userNameSpan").text(userName);
+                $("#userNameSpanNav").text("Hello, " + userName);
+            })
+            .fail(function() {
+                $("#userNameSpan").text("User");
+                $("#userNameSpanNav").text("Hello, User");
+            });
+
+        // File upload handling
+        const fileUpload = document.getElementById("fileUpload");
+        const uploadArea = document.getElementById("uploadArea");
+        const analyzeBtn = document.getElementById("analyzeBtn");
+        const fileInfo = document.getElementById("fileInfo");
+        const selectedFileName = document.getElementById("selectedFileName");
+        const fileSize = document.getElementById("fileSize");
+
+        fileUpload.addEventListener("change", function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                selectedFileName.textContent = file.name;
+                fileSize.textContent = (file.size / 1024).toFixed(2) + " KB";
+                fileInfo.style.display = "block";
+                analyzeBtn.disabled = false;
+            }
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            uploadArea.classList.add("drag-over");
+        });
+
+        uploadArea.addEventListener("dragleave", () => {
+            uploadArea.classList.remove("drag-over");
+        });
+
+        uploadArea.addEventListener("drop", (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove("drag-over");
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileUpload.files = files;
+                const file = files[0];
+                selectedFileName.textContent = file.name;
+                fileSize.textContent = (file.size / 1024).toFixed(2) + " KB";
+                fileInfo.style.display = "block";
+                analyzeBtn.disabled = false;
+            }
+        });
+
+        // Analyze button
+        analyzeBtn.addEventListener("click", async function() {
+            const file = fileUpload.files[0];
+            if (!file) {
+                alert("Please select a file first");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("report", file);
+
+            // Show loading
+            document.getElementById("loadingSpinner").style.display = "block";
+            document.getElementById("aiOutput").style.display = "none";
+            analyzeBtn.disabled = true;
+
+            try {
+                const response = await fetch("/protected/api/analyze", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Display results
+                    document.getElementById("summaryText").innerHTML = formatText(result.analysis.summary);
+                    document.getElementById("findingsText").innerHTML = formatText(result.analysis.findings);
+                    document.getElementById("recommendationsText").innerHTML = formatText(result.analysis.recommendations);
+                    document.getElementById("termsText").innerHTML = formatText(result.analysis.terms);
+
+                    renderLabInsights(result.analysis);
+                    
+                    // Display diagnosis if available
+                    if (result.analysis.diagnosis && result.analysis.diagnosis !== 'No specific diagnosis mentioned in the report.') {
+                        document.getElementById("diagnosisText").innerHTML = formatText(result.analysis.diagnosis);
+                        document.getElementById("diagnosisSection").style.display = "block";
+                    } else {
+                        document.getElementById("diagnosisSection").style.display = "none";
+                    }
+                    
+                    // Display medications if available
+                    if (result.analysis.medications && result.analysis.medications.length > 0) {
+                        let medsHtml = '<ul style="list-style: none; padding: 0;">';
+                        result.analysis.medications.forEach((med, index) => {
+                            medsHtml += `<li style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <strong>${index + 1}. ${med.name}</strong> - ${med.dosage}
+                            </li>`;
+                        });
+                        medsHtml += '</ul>';
+                        document.getElementById("medicationsText").innerHTML = medsHtml;
+                        document.getElementById("medicationsSection").style.display = "block";
+                    } else {
+                        document.getElementById("medicationsSection").style.display = "none";
+                    }
+                    
+                    // Display medication instructions if available
+                    if (result.analysis.medicationInstructions && result.analysis.medicationInstructions !== 'No medications were found in this report.') {
+                        document.getElementById("medicationInstructionsText").innerHTML = formatText(result.analysis.medicationInstructions);
+                        document.getElementById("medicationInstructionsSection").style.display = "block";
+                    } else {
+                        document.getElementById("medicationInstructionsSection").style.display = "none";
+                    }
+                    
+                    // Display alternative medications if available
+                    if (result.analysis.alternativeMedications) {
+                        document.getElementById("alternativeMedicationsText").innerHTML = formatText(result.analysis.alternativeMedications);
+                        document.getElementById("alternativeMedicationsSection").style.display = "block";
+                    } else {
+                        document.getElementById("alternativeMedicationsSection").style.display = "none";
+                    }
+                    
+                    document.getElementById("aiOutput").style.display = "block";
+                    
+                    // Store report ID for download
+                    document.getElementById("downloadBtn").dataset.reportId = result.reportId;
+
+                    // Extraction info (show when extraction produced a placeholder or error)
+                    const extractionError = result.analysis.extractionError || null;
+                    const originalText = result.analysis.originalText || '';
+                    const showedExtraction = (extractionError && extractionError.length > 0) || (originalText && originalText.trim().length > 0 && originalText.trim().length < 50 && originalText.toLowerCase().includes('unable to extract'));
+                    if (showedExtraction) {
+                        let exHtml = '';
+                        if (extractionError) exHtml += `<p><strong>Error:</strong> ${extractionError}</p>`;
+                        if (originalText) exHtml += `<p>${formatText(originalText)}</p>`;
+                        document.getElementById('extractionText').innerHTML = exHtml;
+                        document.getElementById('extractionSection').style.display = 'block';
+                        if (originalText && originalText.trim().length > 0) {
+                            document.getElementById('originalTextPre').textContent = originalText;
+                            document.getElementById('originalTextBlock').style.display = 'none';
+                            document.getElementById('toggleOriginalText').style.display = 'inline-block';
+                        }
+                    } else {
+                        document.getElementById('extractionSection').style.display = 'none';
+                        document.getElementById('toggleOriginalText').style.display = 'none';
+                    }
+                    
+                    // Refresh history
+                    loadReportHistory();
+                } else {
+                    alert("Error: " + (result.error || "Failed to analyze report"));
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("An error occurred while analyzing the report. Please try again.");
+            } finally {
+                document.getElementById("loadingSpinner").style.display = "none";
+                analyzeBtn.disabled = false;
+            }
+        });
+
+        // Download report
+        document.getElementById("downloadBtn").addEventListener("click", function() {
+            const reportId = this.dataset.reportId;
+            if (reportId) {
+                window.open(`/protected/api/download/${reportId}`, "_blank");
+            }
+        });
+
+        // Toggle original text / OCR output
+        document.getElementById('toggleOriginalText').addEventListener('click', function() {
+            const block = document.getElementById('originalTextBlock');
+            if (block.style.display === 'none' || block.style.display === '') {
+                block.style.display = 'block';
+                this.textContent = 'Hide full extracted text';
+            } else {
+                block.style.display = 'none';
+                this.textContent = 'Show full extracted text';
+            }
+        });
+
+        // Format text with line breaks
+        function formatText(text) {
+            if (!text) return "<p>No information available.</p>";
+            return text.split("\n").map(line => {
+                if (line.trim().startsWith("-") || line.trim().startsWith("•")) {
+                    return `<li>${line.trim().substring(1).trim()}</li>`;
+                }
+                return `<p>${line}</p>`;
+            }).join("");
+        }
+
+        function firstNonEmptyArray(...candidates) {
+            for (const candidate of candidates) {
+                if (Array.isArray(candidate) && candidate.length > 0) {
+                    return candidate;
+                }
+            }
+            return null;
+        }
+
+        function renderLabInsights(analysis) {
+            const labExplanationsSection = document.getElementById('labExplanationsSection');
+            const labActionItemsSection = document.getElementById('labActionItemsSection');
+            const labQuestionsSection = document.getElementById('labQuestionsSection');
+            const labExplanationsDiv = document.getElementById('labExplanations');
+            const labActionItemsDiv = document.getElementById('labActionItems');
+            const labQuestionsDiv = document.getElementById('labQuestions');
+
+            const labAnalysis = analysis.labAnalysis || {};
+            const labResult = labAnalysis.result || {};
+
+            const explanations = firstNonEmptyArray(
+                analysis.explanations,
+                labAnalysis.explanations,
+                labResult.explanations
+            );
+            const actionItems = firstNonEmptyArray(
+                analysis.action_items,
+                labAnalysis.action_items,
+                labResult.action_items
+            );
+            const questions = firstNonEmptyArray(
+                analysis.questions,
+                labAnalysis.questions,
+                labResult.questions
+            );
+
+            if (labAnalysis && labAnalysis.error) {
+                labExplanationsDiv.innerHTML = `<p style="color:#ff7676;">Watsonx analysis unavailable: ${labAnalysis.error}</p>`;
+                labExplanationsSection.style.display = 'block';
+            } else if (explanations) {
+                let html = '<ul style="padding-left:0; list-style:none;">';
+                explanations.forEach(item => {
+                    const keyLabel = item.key ? `<strong>${item.key.replace(/_/g,' ').toUpperCase()}:</strong> ` : '';
+                    const sev = item.severity ? ` <span class="severity">(${item.severity})</span>` : '';
+                    const body = item.explanation || item.raw_assistant || '';
+                    html += `<li style="margin:8px 0; padding:8px; background: rgba(255,255,255,0.03); border-radius:6px;">${keyLabel}${body}${sev}</li>`;
+                });
+                html += '</ul>';
+                labExplanationsDiv.innerHTML = html;
+                labExplanationsSection.style.display = 'block';
+            } else {
+                labExplanationsSection.style.display = 'none';
+            }
+
+            if (actionItems) {
+                labActionItemsDiv.innerHTML = '<ul>' + actionItems.map(i => `<li>${i}</li>`).join('') + '</ul>';
+                labActionItemsSection.style.display = 'block';
+            } else {
+                labActionItemsSection.style.display = 'none';
+            }
+
+            if (questions) {
+                labQuestionsDiv.innerHTML = '<ol>' + questions.map(q => `<li>${q}</li>`).join('') + '</ol>';
+                labQuestionsSection.style.display = 'block';
+            } else {
+                labQuestionsSection.style.display = 'none';
+            }
+        }
+
+        // Load report history
+        async function loadReportHistory() {
+            try {
+                const response = await fetch("/protected/api/history");
+                const history = await response.json();
+                
+                const historyDiv = document.getElementById("reportHistory");
+                if (history.length === 0) {
+                    historyDiv.innerHTML = '<p class="empty-state">No reports analyzed yet. Upload your first report to get started!</p>';
+                    return;
+                }
+
+                historyDiv.innerHTML = history.map(report => `
+                    <div class="history-item">
+                        <div class="history-item-header">
+                            <span class="history-date">${new Date(report.timestamp).toLocaleString()}</span>
+                            <span class="history-filename">${report.filename}</span>
+                        </div>
+                        <div class="history-item-actions">
+                            <button class="view-btn" onclick="viewReport('${report.id}')">View</button>
+                            <button class="download-btn-small" onclick="downloadReport('${report.id}')">Download</button>
+                        </div>
+                    </div>
+                `).join("");
+            } catch (error) {
+                console.error("Error loading history:", error);
+            }
+        }
+
+        // View report
+        async function viewReport(reportId) {
+            try {
+                const response = await fetch(`/protected/api/report/${reportId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById("summaryText").innerHTML = formatText(result.analysis.summary);
+                    document.getElementById("findingsText").innerHTML = formatText(result.analysis.findings);
+                    document.getElementById("recommendationsText").innerHTML = formatText(result.analysis.recommendations);
+                    document.getElementById("termsText").innerHTML = formatText(result.analysis.terms);
+                    renderLabInsights(result.analysis);
+                    
+                    // Display diagnosis if available
+                    if (result.analysis.diagnosis && result.analysis.diagnosis !== 'No specific diagnosis mentioned in the report.') {
+                        document.getElementById("diagnosisText").innerHTML = formatText(result.analysis.diagnosis);
+                        document.getElementById("diagnosisSection").style.display = "block";
+                    } else {
+                        document.getElementById("diagnosisSection").style.display = "none";
+                    }
+                    
+                    // Display medications if available
+                    if (result.analysis.medications && result.analysis.medications.length > 0) {
+                        let medsHtml = '<ul style="list-style: none; padding: 0;">';
+                        result.analysis.medications.forEach((med, index) => {
+                            medsHtml += `<li style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <strong>${index + 1}. ${med.name}</strong> - ${med.dosage}
+                            </li>`;
+                        });
+                        medsHtml += '</ul>';
+                        document.getElementById("medicationsText").innerHTML = medsHtml;
+                        document.getElementById("medicationsSection").style.display = "block";
+                    } else {
+                        document.getElementById("medicationsSection").style.display = "none";
+                    }
+                    
+                    // Display medication instructions if available
+                    if (result.analysis.medicationInstructions && result.analysis.medicationInstructions !== 'No medications were found in this report.') {
+                        document.getElementById("medicationInstructionsText").innerHTML = formatText(result.analysis.medicationInstructions);
+                        document.getElementById("medicationInstructionsSection").style.display = "block";
+                    } else {
+                        document.getElementById("medicationInstructionsSection").style.display = "none";
+                    }
+                    
+                    // Display alternative medications if available
+                    if (result.analysis.alternativeMedications) {
+                        document.getElementById("alternativeMedicationsText").innerHTML = formatText(result.analysis.alternativeMedications);
+                        document.getElementById("alternativeMedicationsSection").style.display = "block";
+                    } else {
+                        document.getElementById("alternativeMedicationsSection").style.display = "none";
+                    }
+                    
+                    document.getElementById("aiOutput").style.display = "block";
+                    document.getElementById("downloadBtn").dataset.reportId = reportId;
+                    
+                    // Scroll to output
+                    document.getElementById("aiOutput").scrollIntoView({ behavior: "smooth" });
+
+                    // Show extraction info if present
+                    const extractionError_v = result.analysis.extractionError || null;
+                    const originalText_v = result.analysis.originalText || '';
+                    const showExtraction_v = (extractionError_v && extractionError_v.length > 0) || (originalText_v && originalText_v.trim().length > 0 && originalText_v.toLowerCase().includes('unable to extract'));
+                    if (showExtraction_v) {
+                        let exHtml = '';
+                        if (extractionError_v) exHtml += `<p><strong>Error:</strong> ${extractionError_v}</p>`;
+                        if (originalText_v) exHtml += `<p>${formatText(originalText_v)}</p>`;
+                        document.getElementById('extractionText').innerHTML = exHtml;
+                        document.getElementById('extractionSection').style.display = 'block';
+                        if (originalText_v && originalText_v.trim().length > 0) {
+                            document.getElementById('originalTextPre').textContent = originalText_v;
+                            document.getElementById('originalTextBlock').style.display = 'none';
+                            document.getElementById('toggleOriginalText').style.display = 'inline-block';
+                        }
+                    } else {
+                        document.getElementById('extractionSection').style.display = 'none';
+                        document.getElementById('toggleOriginalText').style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error("Error viewing report:", error);
+                alert("Failed to load report");
+            }
+        }
+
+        // Download report
+        function downloadReport(reportId) {
+            window.open(`/protected/api/download/${reportId}`, "_blank");
+        }
+
+        // Load history on page load
+        loadReportHistory();
+    </script>
+</body>
+</html>
+
+</body>
+</html>

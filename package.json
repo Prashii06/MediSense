@@ -1,0 +1,25 @@
+{
+  "name": "WebSdkExample-Starter",
+  "version": "2.0.0",
+  "description": "App ID web application sample",
+  "main": "app.js",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "axios": "^1.13.2",
+    "cfenv": "^1.2.2",
+    "dotenv": "^17.2.3",
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "ibm-cos-sdk": "^1.14.1",
+    "ibmcloud-appid": "^7.0.0",
+    "jquery.json-viewer": "^1.4.0",
+    "multer": "^1.4.5-lts.1",
+    "passport": "^0.6.0",
+    "pdf-parse": "^1.1.4",
+    "tesseract.js": "^2.1.5",
+    "uuid": "^9.0.1"
+  }
+}
