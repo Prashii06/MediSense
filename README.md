@@ -1,192 +1,124 @@
-# IBM Cloud App ID
-Node Sample Template App for the IBM Cloud App ID service. The App ID Dashboard overwrites the manifest.yml and localdev-config.json files with the user's information when they download a Node sample app. When downloaded, you can either run the application locally or in IBM Cloud.
+# MediSense - AI-Powered Medical Report Simplification
 
-[![IBM Cloud powered][img-ibmcloud-powered]][url-ibmcloud]
-[![Node Badge][img-node-badge]][url-node-badge]
-[![Travis][img-travis-master]][url-travis-master]
-[![Coveralls][img-coveralls-master]][url-coveralls-master]
-[![Codacy][img-codacy]][url-codacy]
+**Transform complex medical reports into clear, easy-to-understand language in seconds.**
 
-[![GithubWatch][img-github-watchers]][url-github-watchers]
-[![GithubStars][img-github-stars]][url-github-stars]
-[![GithubForks][img-github-forks]][url-github-forks]
+MediSense is a secure, privacy-first web application that helps patients, caregivers, and families understand laboratory reports, prescriptions, diagnoses, and imaging results — without needing to decode complicated medical terminology.
 
-## Table of Contents
-* [Contents](#contents)
-* [Requirements](#requirements)
-* [Running Locally](#running-locally)
-* [Running in IBM Cloud](#running-in-ibm-cloud)
-* [Clarification](#clarification)
-* [License](#license)
+Upload your report → AI analyzes it → Get a simple, accurate explanation instantly.
 
-## Contents
+## ✨ Key Features
 
-`app.js`  Uses Express to set the routes.
+- Instant conversion of medical jargon into plain language  
+- Supports PDF, JPG, PNG, and TXT files  
+- End-to-end encryption and enterprise-grade security  
+- Powered by IBM watsonx.ai for accurate medical understanding  
+- Secure authentication via IBM Cloud App ID  
+- Personal report history with past analyses  
+- Built on IBM Cloud with Cloud Object Storage (COS)
 
-`public/index.html`  The application landing page. Click **Login** to start.
+## 🛠 Tech Stack
 
-`protected/protected.html`  The application's protected page. After clicking the **Login** button, the user is redirected here. This is where
-we check whether the user is authorized or not. In the case where the user is not authorized, we send a request to the
-authentication server to start the OAuth flow. If the user is authorized, we show the protected data.
+| Layer              | Technology                          |
+|--------------------|-------------------------------------|
+| Frontend           | HTML5, CSS3, Vanilla JavaScript     |
+| Backend            | Node.js + Express                   |
+| Authentication     | IBM Cloud App ID                    |
+| AI Engine          | IBM watsonx.ai                      |
+| File Storage       | IBM Cloud Object Storage (COS)      |
+| Session Management | Express Session (+ Redis in prod)   |
+| Deployment         | IBM Cloud Foundry / Kubernetes     |
 
-## Requirements
-* Node 6.0.0 or higher
+## 📋 Prerequisites
 
-## Running Locally
+- Node.js 18 or higher  
+- IBM Cloud account  
+- IBM Cloud App ID service instance  
+- IBM watsonx.ai project (API key + project ID)  
+- IBM Cloud Object Storage instance
 
-Run the following commands:
+## 🚀 Local Development
+
 ```bash
+git clone https://github.com/Prashii06/MediSense.git
+cd MediSense
 npm install
+```
+
+Create a `.env` file in the root directory:
+
+```env
+# IBM Cloud App ID
+APPID_TENANT_ID=your-tenant-id
+APPID_CLIENT_ID=your-client-id
+APPID_SECRET=your-client-secret
+APPID_OAUTH_SERVER_URL=https://<region>.appid.cloud.ibm.com/oauth/v4/<tenant-id>
+APPID_REDIRECT_URI=http://localhost:3000/callback
+
+# IBM watsonx.ai
+WATSONX_AI_API_KEY=your-watsonx-api-key
+WATSONX_AI_PROJECT_ID=your-project-id
+WATSONX_AI_URL=https://us-south.ml.cloud.ibm.com
+
+# IBM Cloud Object Storage
+COS_ENDPOINT=https://s3.<region>.cloud-object-storage.appdomain.cloud
+COS_API_KEY_ID=your-cos-api-key
+COS_INSTANCE_CRN=your-cos-crn
+COS_BUCKET_NAME=your-bucket-name
+
+# App
+PORT=3000
+SESSION_SECRET=strong-random-secret
+```
+
+Start the server:
+
+```bash
 npm start
 ```
-Use the link http://localhost:3000 to load the web application in browser.
 
-## Running in Cloud Foundry
+Visit [http://localhost:3000](http://localhost:3000)
 
-### Prerequisites
-Before you begin, make sure that IBM Cloud CLI is installed.
-For more information visit: https://cloud.ibm.com/docs/cli?topic=cloud-cli-getting-started.
+## 🔐 Authentication
 
-### Deployment
+Powered by IBM Cloud App ID with support for email/password and social logins (Google, Facebook, etc.).
 
-**Important:** Before going live, remove http://localhost:3000/* from the list of web redirect URLs located in "Manage Authentication" -> "Authentication Settings" page in the AppID dashboard.
+## 📤 How Report Processing Works
 
-1. Login to IBM Cloud.
+1. User uploads a medical document  
+2. File is securely stored in IBM Cloud Object Storage  
+3. Text is extracted (PDF/image → text)  
+4. Content is sent to watsonx.ai with a medical-specific prompt  
+5. AI returns a patient-friendly explanation  
+6. Result is displayed and saved to user history
 
-  `ibmcloud login -a https://api.{{domain}}`
+## 🚀 Deployment
 
-2. Target a Cloud Foundry organization and space in which you have at least Developer role access:
+### IBM Cloud Foundry
+```bash
+ibmcloud login
+ibmcloud target --cf
+cf push
+```
 
-  Use `ibmcloud target --cf` to target Cloud Foundry org/space interactively.
+### Kubernetes
+```bash
+kubectl apply -f kube_deployment.yml
+```
 
-3. Bind the sample app to the instance of App ID:
+## 🤝 Contributing
 
-  `ibmcloud resource service-alias-create "appIDInstanceName-alias" --instance-name "appIDInstanceName" -s {{space}}`
-  
-4. Add the alias to the manifest.yml file in the sample app.
+Contributions are very welcome! Feel free to:
+- Report bugs or suggest features  
+- Improve AI prompts or UI/UX  
+- Add multilingual support  
+- Submit pull requests
 
-   ```
-   applications:
-        - name: [app-instance-name]
-        memory: 256M
-        services:
-        - appIDInstanceName-alias
-   ```
+## 📄 License
 
-5. Deploy the sample application to IBM Cloud. From the app's folder do:
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
-  `ibmcloud app push`
-  
-6. Now configure the OAuth redirect URL at the App ID dashboard so it will approve redirecting to your cluster. Go to your App ID instance at [IBM Cloud console](https://cloud.ibm.com/resources) and under Manage Authentication->Authentication Settings->Add web redirect URLs add the following URL:
+---
 
-   `https://{App Domain}/ibm/cloud/appid/callback`
-   
-   You find your app's domain by visiting Cloud Foundry Apps at the IBM Cloud dashboard: https://cloud.ibm.com/resources.
+**MediSense** — Making healthcare understandable for everyone.
 
-7. Open your IBM Cloud app route in the browser.
-
-## Running in Kubernetes
-
-### Prerequisites
-Before you begin make sure that IBM Cloud CLI, docker and kubectl installed and that you have a running kubernetes cluster.
-You also need an IBM Cloud container registry namespace (see https://cloud.ibm.com/kubernetes/registry/main/start). You can find your registry domain and repository namespace using `ibmcloud cr namespaces`.
-
-### Deployment
-
-**Important:** Before going live, remove http://localhost:3000/* from the list of web redirect URLs located in "Manage Authentication" -> "Authentication Settings" page in the AppID dashboard.
-
-**Note:** Your App ID instance name must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character. You can visit the App ID dashboard to change your instance name. 
-
-1. Login to IBM Cloud.
-
-    `ibmcloud login -a https://api.{{domain}}`
-  
-2. Run the following command, it will output an export command.
-
-    `ibmcloud cs cluster-config {CLUSTER_NAME}`
-    
-3. Set the KUBECONFIG environment variable. Copy the output from the previous command and paste it in your terminal. The command output looks similar to the following example:
-   
-    `export KUBECONFIG=/Users/$USER/.bluemix/plugins/container-service/clusters/mycluster/kube-config-hou02-mycluster.yml`
-
-4. Bind the instance of App ID to your cluster.
-
-    `ibmcloud cs cluster-service-bind {CLUSTER_NAME} default {APP_ID_INSTANCE_NAME}`
-    
-5. Find your cluster's public endpoint {CLUSTER_ENDPOINT}.
-   
-   Note: If you are using the free version of kubernetes (with only 1 worker node) you can use your node's public IP instead, which you can find using:
-
-    `ibmcloud cs workers {CLUSTER_NAME}`
-
-6. Edit the kube_deployment.yml file. 
-    1. Edit the image field of the deployment section to match your image name. The name of your image should be `{REGISTRY_DOMAIN}/{REPOSITORY_NAMESPACE}/appid-node-sample:{APP_VERSION}`). 
-    2. Edit the Binding name field to match yours. It should be `binding-{APP_ID_INSTANCE_NAME}`.
-    3. Edit redirectUri's value to include your cluster's IP. The value should be `http://{CLUSTER_ENDPOINT}/ibm/cloud/appid/callback`
-    4. Optional: Change the value of metadata.namespace from default to your cluster namespace if you’re using a different namespace.
-
-7. Build your Docker image.
-   
-    `docker build -t {REGISTRY_DOMAIN}/{REPOSITORY_NAMESPACE}/appid-node-sample:{APP_VERSION} .`
-    
-8. Push the image.
-   
-    `docker push {REGISTRY_DOMAIN}/{REPOSITORY_NAMESPACE}/appid-node-sample:{APP_VERSION}`
-   
-    `kubectl apply -f kube_deployment.yml`
-
-9. Now configure the OAuth redirect URL at the App ID dashboard so it will approve redirecting to your cluster. Go to your App ID instance at [IBM Cloud console](https://cloud.ibm.com/resources) and under Manage Authentication->Authentication Settings->Add web redirect URLs add the following URL:
-
-   `https://{CLUSTER_ENDPOINT}:30000/ibm/cloud/appid/callback`
-
-10. You can see your sample running on Kubernetes in IBM Cloud.
-   
-    `open http://{CLUSTER_ENDPOINT}:30000`
-
-## Clarification
-This sample runs on one instance and uses the session to store the authorization data.
-In order to run it in production mode, use services such as Redis to store the relevant data.
-
-
-## Got Questions?
-Join us on [Slack](https://www.ibm.com/cloud/blog/announcements/get-help-with-ibm-cloud-app-id-related-questions-on-slack) and chat with our dev team.
-
-## See More
-#### Protecting Node.js Web Applications with IBM Cloud App ID
-https://www.youtube.com/watch?v=6roa1ZOvwtw
-
-## License
-
-Copyright (c) 2019 IBM Corporation
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-[img-ibmcloud-powered]: https://img.shields.io/badge/ibm%20cloud-powered-blue.svg
-[url-ibmcloud]: https://www.ibm.com/cloud/
-
-[img-node-badge]: https://img.shields.io/badge/platform-node-lightgrey.svg?style=flat
-[url-node-badge]: https://developer.node.com/index.html
-
-[img-travis-master]: https://travis-ci.org/ibm-cloud-security/app-id-sample-node.svg?branch=master
-[url-travis-master]: https://travis-ci.org/ibm-cloud-security/app-id-sample-node?branch=master
-
-[img-coveralls-master]: https://coveralls.io/repos/github/ibm-cloud-security/app-id-sample-node/badge.svg
-[url-coveralls-master]: https://coveralls.io/github/ibm-cloud-security/app-id-sample-node
-
-[img-codacy]: https://api.codacy.com/project/badge/Grade/fb042b4cb2f048968b567cde2251edcc
-[url-codacy]: https://www.codacy.com/app/ibm-cloud-security/app-id-sample-node
-
-[img-github-watchers]: https://img.shields.io/github/watchers/ibm-cloud-security/app-id-sample-node.svg?style=social&label=Watch
-[url-github-watchers]: https://github.com/ibm-cloud-security/app-id-sample-node/watchers
-[img-github-stars]: https://img.shields.io/github/stars/ibm-cloud-security/app-id-sample-node.svg?style=social&label=Star
-[url-github-stars]: https://github.com/ibm-cloud-security/app-id-sample-node/stargazers
-[img-github-forks]: https://img.shields.io/github/forks/ibm-cloud-security/app-id-sample-node.svg?style=social&label=Fork
-[url-github-forks]: https://github.com/ibm-cloud-security/app-id-sample-node/network
-
-
-
-
+Star this repo if you believe in accessible health information! 🌟
