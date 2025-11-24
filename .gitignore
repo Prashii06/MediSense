@@ -44,7 +44,6 @@ npm-debug.log*
 .idea
 /out
 /bin
-.env
 
 # Application specific
 /uploads/
