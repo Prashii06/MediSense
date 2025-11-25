@@ -1,3 +1,6 @@
 applications:
 - name: AppIDc8-node-8c3ba85f-6e45-4141-85fd-7ae695599e46
   memory: 256M
+buildpacks:
+  - https://github.com/cloudfoundry/apt-buildpack
+  - nodejs_buildpack

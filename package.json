@@ -20,6 +20,9 @@
     "passport": "^0.6.0",
     "pdf-parse": "^1.1.4",
     "tesseract.js": "^2.1.5",
+    "pdfkit": "^0.15.0",
+    "pdf-poppler": "^0.2.1",
+    "express-rate-limit": "^7.4.1",
     "uuid": "^9.0.1"
   }
 }

@@ -49,3 +49,6 @@ npm-debug.log*
 /uploads/
 /reports/
 
+#env files
+.env
+localdev-config1.json

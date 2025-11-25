@@ -7,9 +7,6 @@ const fs = require('fs');
 const path = require('path');
 const { analyzeLabReport } = require('./services/labAnalyzer');
 
-// [Previous medicalTerms, medicalAbbreviations, medicationDatabase, etc. remain the same]
-// ... (keeping all the existing dictionaries and data structures)
-
 class ReportAnalyzer {
     constructor() {
         this.reportsDir = path.join(__dirname, 'reports');
@@ -22,17 +19,12 @@ class ReportAnalyzer {
         }
     }
 
-    /**
-     * Async: analyze report and run lab-specific analysis (watsonx.ai)
-     */
     async analyzeReportWithLabs(text, filename, patientMeta = {}) {
         console.log('Starting report analysis with Watson integration...');
         
-        // Get base analysis first
         const base = this.analyzeReport(text, filename);
         base.patientMeta = patientMeta;
         
-        // Try Watson lab analysis
         try {
             console.log('Calling Watson lab analyzer...');
             const labResult = await analyzeLabReport(text, patientMeta);
@@ -41,16 +33,11 @@ class ReportAnalyzer {
             
             if (labResult && labResult.result) {
                 base.labAnalysis = labResult;
-                
-                // Merge insights into main sections
                 this.mergeLabInsightsIntoSections(base);
-                
-                // Build narrative
                 const labNarrative = this.buildLabNarrative(labResult);
                 if (labNarrative) {
                     base.labNarrative = labNarrative;
                 }
-                
                 console.log('Watson analysis successfully integrated');
             } else {
                 console.warn('Watson returned empty result');
@@ -70,19 +57,25 @@ class ReportAnalyzer {
         return base;
     }
 
-    /**
-     * Analyze a medical report text (base analysis without Watson)
-     */
     analyzeReport(text, filename) {
         const lowerText = text.toLowerCase();
 
-        // Check for extraction failures
         const extractionFailure = /unable to extract text/i.test(text) || 
                                  /ocr is disabled/i.test(text) || 
                                  /unable to extract/i.test(text);
         
         if (extractionFailure) {
-            const summary = `📋 **Report Overview**\n\nUnable to extract text from the uploaded file. This may be a scanned image or an unsupported file type.\n\n🔍 **Key Points**\n\n• No textual content could be extracted from this file.\n\n💡 **What You Should Do**\n\n1. Re-upload a machine-readable (searchable) PDF if available.\n2. If this is a scanned document, enable OCR and try again.\n3. Contact support for help if needed.`;
+            const summary = `Report Overview
+
+Unable to extract text from the uploaded file. This may be a scanned image or an unsupported file type.
+
+Key Points
+• No textual content could be extracted from this file.
+
+What You Should Do
+1. Re-upload a machine-readable (searchable) PDF if available.
+2. If this is a scanned document, enable OCR and try again.
+3. Contact support for help if needed.`;
 
             return {
                 summary,
@@ -98,7 +91,6 @@ class ReportAnalyzer {
             };
         }
         
-        // Extract components
         const diagnosis = this.extractDiagnosis(text, lowerText);
         const medications = this.extractMedications(text, lowerText);
         const findings = this.extractFindings(text, lowerText);
@@ -122,9 +114,6 @@ class ReportAnalyzer {
         };
     }
 
-    /**
-     * Merge Watson lab insights into the main sections
-     */
     mergeLabInsightsIntoSections(analysis) {
         if (!analysis || !analysis.labAnalysis || !analysis.labAnalysis.result) {
             return;
@@ -134,7 +123,6 @@ class ReportAnalyzer {
         const explanations = Array.isArray(result.explanations) ? result.explanations : [];
         const actionItems = Array.isArray(result.action_items) ? result.action_items : [];
 
-        // Add explanations to findings
         if (explanations.length > 0) {
             const explanationBullets = explanations.slice(0, 3).map(exp => {
                 const label = exp.key ? exp.key.replace(/_/g, ' ').toUpperCase() : 'LAB RESULT';
@@ -144,7 +132,7 @@ class ReportAnalyzer {
             }).join('\n');
 
             if (analysis.summary && !analysis.summary.includes('Watson Lab Highlights')) {
-                analysis.summary += `\n\n🔬 **Watson AI Lab Analysis**\n${explanationBullets}`;
+                analysis.summary += `\n\nWatson AI Lab Analysis\n${explanationBullets}`;
             }
 
             if (!analysis.findings || /No text could be extracted/i.test(analysis.findings)) {
@@ -155,17 +143,13 @@ class ReportAnalyzer {
             }
         }
 
-        // Add action items to recommendations
         if (actionItems.length > 0 && analysis.recommendations && 
             !analysis.recommendations.includes('AI Lab Follow-ups')) {
             const actionList = actionItems.map(item => `• ${item}`).join('\n');
-            analysis.recommendations += `\n\n🤖 **AI-Recommended Actions**\n${actionList}`;
+            analysis.recommendations += `\n\nAI-Recommended Actions\n${actionList}`;
         }
     }
 
-    /**
-     * Build a narrative from Watson lab analysis
-     */
     buildLabNarrative(labAnalysis) {
         if (!labAnalysis || !labAnalysis.result) {
             return null;
@@ -196,11 +180,6 @@ class ReportAnalyzer {
         return sentences.length > 0 ? sentences.join(' ') : null;
     }
 
-    // ... [Keep all other existing methods like extractFindings, extractDiagnosis, etc.]
-
-    /**
-     * Save analyzed report with COS upload support
-     */
     async saveReport(userId, analysis, reportId) {
         const reportData = {
             id: reportId,
@@ -230,7 +209,6 @@ class ReportAnalyzer {
 
         console.log(`Report saved locally: ${filePath}`);
 
-        // Upload to COS if enabled
         if (process.env.ENABLE_COS_UPLOAD === 'true') {
             try {
                 const bucket = process.env.COS_BUCKET;
@@ -246,16 +224,12 @@ class ReportAnalyzer {
                 }
             } catch (e) {
                 console.error('Failed to upload report to COS:', e.message || e);
-                // Don't fail the save operation
             }
         }
 
         return reportData;
     }
 
-    /**
-     * Load a saved report
-     */
     loadReport(reportId) {
         const filePath = path.join(this.reportsDir, `${reportId}.json`);
         if (fs.existsSync(filePath)) {
@@ -264,9 +238,6 @@ class ReportAnalyzer {
         return null;
     }
 
-    /**
-     * Get user's report history
-     */
     getUserReports(userId) {
         const reports = [];
         
@@ -297,9 +268,6 @@ class ReportAnalyzer {
         return reports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     }
 
-    /**
-     * Generate downloadable report
-     */
     generateDownloadableReport(reportData) {
         let report = '='.repeat(60) + '\n';
         report += 'MEDICAL REPORT ANALYSIS\n';
@@ -339,13 +307,11 @@ class ReportAnalyzer {
         report += 'IMPORTANT DISCLAIMER\n';
         report += '='.repeat(60) + '\n\n';
         report += 'This analysis is for informational purposes only and should not replace professional medical advice, diagnosis or treatment. Always consult with qualified doctors for proper interpretation of medical reports and any health concerns.\n\n';
-        report += 'Generated by MedExplain AI with Watson Integration\n';
+        report += 'Generated by MediSense with Watson Integration\n';
         report += '='.repeat(60) + '\n';
         
         return report;
     }
-
-    // ... [Keep all other helper methods unchanged]
 }
 
 module.exports = ReportAnalyzer;
